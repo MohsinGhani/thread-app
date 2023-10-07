@@ -17,10 +17,10 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [showOTP, setShowOTP] = useState(false);
   const [user, setUser] = useState(null);
-
+  const authsetting = (auth.settings.appVerificationDisabledForTesting = true);
   function onCaptchVerify() {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(
+    if (!authsetting) {
+      window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier(
         "recaptcha-container",
         {
           size: "invisible",
@@ -29,11 +29,10 @@ const App = () => {
           },
           "expired-callback": () => {},
         },
-        auth
+        firebase.auth()
       );
     }
   }
-
   function onSignup() {
     setLoading(true);
     onCaptchVerify();

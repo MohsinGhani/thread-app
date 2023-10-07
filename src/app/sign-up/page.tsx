@@ -2,21 +2,9 @@
 
 import { Button, Checkbox, Form, Input, Modal, Select, message } from "antd";
 import { useRouter } from "next/navigation";
-
 import React, { useState } from "react";
-import { useAuthContext } from "../layout";
 import { auth, db } from "../../../firebase";
-
-import {
-  signInWithEmailAndPassword,
-  signInWithPhoneNumber,
-  RecaptchaVerifier,
-  AuthErrorCodes,
-  sendEmailVerification,
-  createUserWithEmailAndPassword,
-} from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { CloseOutlined } from "@ant-design/icons";
+import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
 
 const Page = () => {
   const { Option } = Select;
@@ -59,8 +47,8 @@ const Page = () => {
 
     signInWithPhoneNumber(auth, phoneNumbers, appVerifier)
       .then((confirmationResult) => {
-        // SMS sent. Prompt user to type the code from the message, then sign the
-        // user in with confirmationResult.confirm(code).
+        3;
+        console.log(confirmationResult);
         window.confirmationResult = confirmationResult;
         // ...
       })
@@ -78,8 +66,7 @@ const Page = () => {
         <h1 className="font-[600] text-[30px] font-poppins text-[#000] mb-[-30px]">
           Signup to thread
         </h1>
-        <p className="font-[500] text-[14px] font-poppins text-[#8591A3]  mb-[45px]"></p>
-
+        <p className="font-[500] text-[14px] fo nt-poppins text-[#8591A3]  mb-[45px]"></p>
         <Form
           name="signup"
           onFinish={onFinish}
