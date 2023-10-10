@@ -80,9 +80,7 @@ const Page = () => {
           </div>
         </Header>
         <Content style={{ margin: "24px 16px 0" }}>
-          <div className="">
-            <Contents />
-          </div>
+          <Contents />
         </Content>
         <Footer style={{ textAlign: "center" }}>
           Ant Design ©2023 Created by Ant UED

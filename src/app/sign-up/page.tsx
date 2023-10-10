@@ -1,22 +1,37 @@
 "use client";
-
-import { Button, Checkbox, Form, Input, Modal, Select, message } from "antd";
+import React, { useEffect, useState } from "react";
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  onAuthStateChanged,
+  sendEmailVerification,
+  updateProfile,
+} from "firebase/auth";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
 import { auth, db } from "../../../firebase";
-import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
+import { Modal, Select } from "antd";
 
+import { Button, Form, Input } from "antd";
+import { CloseOutlined } from "@ant-design/icons";
+import { doc, setDoc } from "firebase/firestore";
+import PhoneInput from "react-phone-input-2";
+import { useAuthContext } from "../layout";
 const Page = () => {
   const { Option } = Select;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const [number, setNumber] = useState("");
   const router = useRouter();
+  const setUpRecaptcha: any = useAuthContext();
+
   const onFinish = async (values: any) => {
+    console.log("🚀 ~ values:", values);
+
     const {
       firstName,
       lastName,
       email,
+
       phoneNumber,
       password,
       confirmPassword,
@@ -26,37 +41,59 @@ const Page = () => {
       setError("Passwords do not match!");
       return;
     }
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      auth,
-      "recaptcha-container",
-      {
-        size: "normal",
-        callback: (response: any) => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-          // ...
-        },
-        "expired-callback": () => {
-          // Response expired. Ask user to solve reCAPTCHA again.
-          // ...
-        },
+    const getOtp = async (e: any) => {
+      e.preventDefault();
+      if (number === "" || number === undefined)
+        return setError("Enter number");
+      try {
+        const resonsne = await setUpRecaptcha(number);
+        console.log(resonsne);
+      } catch (err) {
+        console.log(err);
       }
-    );
+    };
+    try {
+      setLoading(true);
 
-    const phoneNumbers = phoneNumber.toString();
-    const appVerifier = window.recaptchaVerifier;
+      const authUser = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
 
-    signInWithPhoneNumber(auth, phoneNumbers, appVerifier)
-      .then((confirmationResult) => {
-        3;
-        console.log(confirmationResult);
-        window.confirmationResult = confirmationResult;
-        // ...
-      })
-      .catch((error) => {
-        // Error; SMS not sent
-        // ...
+      const firstName = values.firstName;
+
+      await updateProfile(authUser.user, { displayName: firstName });
+      await sendEmailVerification(authUser.user);
+
+      const uid = authUser.user.uid;
+      await setDoc(doc(db, "Users", uid), {
+        firstName,
+        lastName,
+        email,
+
+        phone: phoneNumber,
       });
+
+      setLoading(false);
+      getOtp(number);
+      Modal.success({
+        title: "Sign up successful!",
+        content: "Please check your email and verify your account.",
+        okText: "Close",
+        closeIcon: <CloseOutlined />,
+        onOk: () => {
+          router.push("/sign-in");
+        },
+        className: "custom-success-modal",
+      });
+    } catch (err) {
+      console.error("Error:", err);
+      setLoading(false);
+      setError("An error occurred during sign up.");
+    }
   };
+
   const onFinishFailed = (errorInfo: any) => {
     console.error("Validation failed:", errorInfo);
   };
@@ -125,11 +162,13 @@ const Page = () => {
               { required: true, message: "Please enter your phone number" },
             ]}
           >
-            <Input
-              type="number"
-              className="font-[500] text-[14px]  rounded-[10px] font-poppins text-[#8591A3] h-[60px] mb-[20px] "
-              placeholder="Phone Number"
+            <PhoneInput
+              country={"pak"}
+              value={number}
+              onChange={setNumber}
+              placeholder="enter phone number"
             />
+            <div id="recaptcha-container" />
           </Form.Item>
           <Form.Item
             name="password"

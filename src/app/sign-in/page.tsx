@@ -1,10 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button, Checkbox, Form, Input, Modal } from "antd";
+
+import { auth } from "../../../firebase";
+import { CloseOutlined } from "@ant-design/icons";
+import { useAuthContext } from "../layout";
 
 const Page = () => {
   const [form] = Form.useForm();
@@ -13,12 +17,50 @@ const Page = () => {
 
   const onFinish = async (values: any) => {
     const { email, password } = values;
-    router.push("/dashboard");
+
     setLoading(true);
 
     form
       .validateFields()
-
+      .then(() => {
+        signInWithEmailAndPassword(auth, email, password)
+          .then((res) => {
+            if (res.user.emailVerified === true) {
+              router.push("/dashboard");
+            } else {
+              Modal.error({
+                title: "Please verify your email first",
+                content: "Please check your email and verify your account.",
+                okText: "Close",
+                closeIcon: <CloseOutlined />,
+                onOk: () => {},
+                className: "custom-success-modal",
+              });
+              router.push("/dashboard");
+            }
+            console.log("res", auth.currentUser);
+          })
+          .catch((err) => {
+            if (err.code === "auth/invalid-login-credentials") {
+              form.setFields([
+                {
+                  name: "password",
+                  errors: ["Incorrect email or password please try again"],
+                },
+              ]);
+            } else {
+              form.setFields([
+                {
+                  name: "email",
+                  errors: [err?.code],
+                },
+              ]);
+            }
+          })
+          .finally(() => {
+            setLoading(false);
+          });
+      })
       .catch((errorInfo) => {
         console.log("Validation failed:", errorInfo);
         setLoading(false);

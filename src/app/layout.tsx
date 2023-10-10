@@ -2,13 +2,17 @@
 import "./globals.css";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import { RecaptchaVerifier, onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import DynamicHeader from "./component/header";
 
 type Dispatch<T> = (action: T) => void;
-
+interface AuthContextType {
+  user: null;
+  setUser: Dispatch<any>;
+  setUpRecaptcha: () => void;
+}
 const AuthContext = createContext({
   user: null,
   setUser: () => {},
@@ -23,6 +27,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const [user, setUser] = useState(null);
+
+  const setUpRecaptcha = () => {
+    const recaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      "recaptcha-container",
+      {}
+    );
+    recaptchaVerifier.render();
+  };
 
   useEffect(() => {
     onAuthStateChanged(auth, async (u) => {
@@ -57,7 +70,7 @@ export default function RootLayout({
 
   return (
     <>
-      <AuthContext.Provider value={{ user, setUser }}>
+      <AuthContext.Provider value={{ user, setUser, setUpRecaptcha }}>
         <html lang="en">
           <body>
             <DynamicHeader />
